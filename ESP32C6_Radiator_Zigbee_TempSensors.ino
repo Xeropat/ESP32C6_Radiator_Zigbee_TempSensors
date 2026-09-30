@@ -1,5 +1,5 @@
 /**
- * ESP32-C6 battery-powered hydronic radiator temperature sensor (v2)
+ * ESP32-C6 battery-powered hydronic radiator temperature sensor (v2 - Fixed)
  * ------------------------------------------------------------------
  * Reads two NTC thermistors (radiator inlet/flow and outlet/return)
  * and reports both as Zigbee Temperature Measurement endpoints.
@@ -78,7 +78,7 @@
 // Readings outside these node voltages are treated as a fault
 // (open/short thermistor, or ADC saturation at 11 dB).
 #define NODE_MIN_MV        50.0f
-#define NODE_MAX_MV        3000.0f
+#define NODE_MAX_MV        2800.0f
 
 // Battery voltage range used for the percentage estimate (single Li-ion
 // cell by default; for 2xAA alkaline use roughly 2000 / 3000).
@@ -89,7 +89,7 @@
 #define uS_TO_S_FACTOR     1000000ULL
 #define TIME_TO_SLEEP      60        // seconds between readings
 #define JOIN_TIMEOUT_MS    30000     // give up joining/rejoining after this
-#define REPORT_SETTLE_MS   1500      // time to let reports go out before sleeping
+#define REPORT_SETTLE_MS   300       // time to let reports go out before sleeping
 #define FACTORY_RESET_MS   5000      // hold BOOT this long to factory reset
 
 // Zigbee endpoints - must be unique numbers 1-254
@@ -149,7 +149,9 @@ uint32_t readBatteryMv() {
     total += analogReadMilliVolts(BATTERY_ADC_PIN);
     delay(1);
   }
-  return (total / SAMPLES) * 2;  // undo the 1M/1M divider
+  // 2.08f factor compensates for high-impedance (1M/1M) ADC loading
+  float measuredMv = (float)(total / SAMPLES);
+  return (uint32_t)(measuredMv * 2.08f);
 }
 
 // ---------------------------------------------------------------------
@@ -178,9 +180,9 @@ void measureReportAndSleep() {
   if (battMv > 0) {
     int pct = map((long)battMv, BATT_EMPTY_MV, BATT_FULL_MV, 0, 100);
     pct = constrain(pct, 0, 100);
-    // Zigbee battery percentage is in 0.5% steps (0-200); voltage in 100 mV units.
-    // Check your core version's ZigbeeEP docs if these units differ.
-    zbInlet.setBatteryPercentage((uint8_t)pct);
+
+    // Zigbee battery percentage uses 0.5% steps (0-200 range)
+    zbInlet.setBatteryPercentage((uint8_t)(pct * 2));
     zbInlet.setBatteryVoltage((uint8_t)(battMv / 100));
     Serial.printf("Battery: %u mV (%d%%)\r\n", (unsigned)battMv, pct);
   }
@@ -198,8 +200,7 @@ void measureReportAndSleep() {
     zbInlet.reportBatteryPercentage();
   }
 
-  // Attribute reports don't reliably produce an application-level ack, so
-  // just give the stack a short, fixed window to transmit, then sleep.
+  // Short transmit buffer flush window
   delay(REPORT_SETTLE_MS);
 
   sleepNow();
