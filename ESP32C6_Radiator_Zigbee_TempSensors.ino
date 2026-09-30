@@ -181,8 +181,8 @@ void measureReportAndSleep() {
     int pct = map((long)battMv, BATT_EMPTY_MV, BATT_FULL_MV, 0, 100);
     pct = constrain(pct, 0, 100);
 
-    // Zigbee battery percentage uses 0.5% steps (0-200 range)
-    zbInlet.setBatteryPercentage((uint8_t)(pct * 2));
+    // Core takes 0-100 and converts to the Zigbee 0-200 range itself
+    zbInlet.setBatteryPercentage((uint8_t)pct);
     zbInlet.setBatteryVoltage((uint8_t)(battMv / 100));
     Serial.printf("Battery: %u mV (%d%%)\r\n", (unsigned)battMv, pct);
   }
