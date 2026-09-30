@@ -85,6 +85,11 @@
 #define BATT_EMPTY_MV      3300
 #define BATT_FULL_MV       4150
 
+// Development switch: 1 = never deep sleep (keeps the USB port alive and
+// reboots once per cycle so you can watch the serial output). Set to 0
+// for battery use.
+#define DEBUG_NO_SLEEP     1
+
 // Sleep / reporting
 #define uS_TO_S_FACTOR     1000000ULL
 #define TIME_TO_SLEEP      60        // seconds between readings
@@ -107,7 +112,13 @@ ZigbeeTempSensor zbOutlet(OUTLET_ENDPOINT);
 void sleepNow() {
   Serial.println("Going to sleep.");
   Serial.flush();
+#if DEBUG_NO_SLEEP
+  Serial.println("DEBUG_NO_SLEEP: staying awake, restarting after one cycle");
+  delay(TIME_TO_SLEEP * 1000UL);
+  ESP.restart();
+#else
   esp_deep_sleep_start();
+#endif
 }
 
 // ---------------------------------------------------------------------
