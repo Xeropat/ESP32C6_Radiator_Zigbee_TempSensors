@@ -243,6 +243,14 @@ void checkFactoryReset() {
 // ---------------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
+#if DEBUG_NO_SLEEP
+  // Native USB drops and re-enumerates on every reboot, so give the
+  // Serial Monitor time to reconnect before we print anything.
+  unsigned long serialWait = millis();
+  while (!Serial && millis() - serialWait < 5000) delay(10);
+  delay(1500);
+  Serial.println("\n=== Boot ===");
+#endif
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(DIVIDER_POWER_PIN, OUTPUT);
