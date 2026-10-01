@@ -53,7 +53,7 @@
 // ---------------------------------------------------------------------
 
 // Pins
-#define DIVIDER_POWER_PIN  2
+#define DIVIDER_POWER_PIN  3
 #define INLET_ADC_PIN      0
 #define OUTLET_ADC_PIN     1
 #define BATTERY_ADC_PIN    -1        // e.g. 3 to enable, -1 to disable
@@ -66,6 +66,7 @@
 // 4.7k centres the divider for ~20-90 C with a 10k NTC. With 10k the node
 // voltage gets close to the top of the ADC range when the pipe is hot.
 #define FIXED_RESISTOR     4700.0f
+#define FIXED_RESISTOR     9580.0f
 
 // Measured voltage at the top of the dividers while DIVIDER_POWER_PIN is
 // HIGH, in millivolts. Measure it rather than assuming 3300.
@@ -88,13 +89,13 @@
 // Development switch: 1 = never deep sleep (keeps the USB port alive and
 // reboots once per cycle so you can watch the serial output). Set to 0
 // for battery use.
-#define DEBUG_NO_SLEEP     1
+#define DEBUG_NO_SLEEP     0
 
 // Sleep / reporting
 #define uS_TO_S_FACTOR     1000000ULL
 #define TIME_TO_SLEEP      60        // seconds between readings
 #define JOIN_TIMEOUT_MS    30000     // give up joining/rejoining after this
-#define REPORT_SETTLE_MS   300       // time to let reports go out before sleeping
+#define REPORT_SETTLE_MS   1500       // time to let reports go out before sleeping
 #define FACTORY_RESET_MS   5000      // hold BOOT this long to factory reset
 
 // Zigbee endpoints - must be unique numbers 1-254
